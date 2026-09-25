@@ -32,7 +32,7 @@
 </div><div id="toast" class="toast"></div>
 <script>
 const TG=window.Telegram?.WebApp; if(TG){TG.ready();TG.expand();}
-const API=window.DRIVER_API||((location.origin&&location.origin!=='null')?location.origin+'/api':'/api'); const user=TG?.initDataUnsafe?.user||{}; const driverId=user.id||0; let online=false,locationReady=sessionStorage.getItem('driver_location_ready')==='1',active=null,timer=null,refresh=null;
+const API="https://aneqnezary.site/api"; const user=TG?.initDataUnsafe?.user||{}; const driverId=user.id||0; let online=false,locationReady=sessionStorage.getItem('driver_location_ready')==='1',active=null,timer=null,refresh=null;
 async function apiFetch(url,opts={}){const headers=new Headers(opts.headers||{});if(TG?.initData)headers.set('X-Telegram-Init-Data',TG.initData);return window.fetch(url,{...opts,headers})}
 
 
