@@ -31,7 +31,7 @@
 </div><div id="toast" class="toast"></div>
 <script>
 const TG=window.Telegram?.WebApp; if(TG){TG.ready();TG.expand();}
-const API=window.DRIVER_API||((location.origin&&location.origin!=='null')?location.origin+'/api':'https://aneqnezary.site/api'); const user=TG?.initDataUnsafe?.user||{}; const driverId=user.id||0; const DEMO_MODE=!driverId; let online=false,locationReady=false,active=null,timer=null,refresh=null;
+const API = "https://aneqnezary.site/driver-app/api";  const user = TG?.initDataUnsafe?.user || {};  const driverId = user.id || 0;  const DEMO_MODE = !driverId;  let online = false, locationReady = false, active = null, timer = null, refresh = null;
 const demoState={online:false,profile:{telegram_id:100001,name:'محمد عبدالله',phone:'0500000000',city:'الرياض — العليا',gender:'ذكر',vehicle_type:'سيارة عائلية',car_model:'تويوتا كامري — أبيض',plate_number:'أ ب ج 1234',telegram_username:'demo_driver',driver_status:'approved',is_online:false,trips_completed:12,rating:4.9,balance:180,subscription_status:'active',loyalty_points:320,referral_count:3},history:[{trip_id:1001,status:'completed',created_at:new Date().toISOString()}],available_orders:[{trip_id:7001,initial_price:35,from_location_text:'العليا، الرياض',to_location_name:'المطار',trip_type:'مشوار'},{trip_id:7002,initial_price:50,from_location_text:'النخيل، الرياض',to_location_name:'الملز',trip_type:'مشوار'}],active_trip:null};
 if(DEMO_MODE){
   const nativeFetch=window.fetch.bind(window);
@@ -57,7 +57,36 @@ function toast(t){const e=document.getElementById('toast');e.textContent=t;e.cla
 function go(id){document.querySelectorAll('.screen').forEach(e=>e.classList.toggle('active',e.id===id));document.querySelectorAll('.nav').forEach(e=>e.classList.toggle('active',e.dataset.screen===id));}
 function showRegistration(){go('register');document.querySelector('.bottom').style.display='none'}
 function showPending(){showRegistration();const r=document.getElementById('register');r.innerHTML='<div class="hero"><h1>⏳ طلبك قيد المراجعة</h1><p>تم استلام بياناتك، وستظهر لك المشاوير بعد اعتماد الإدارة.</p></div><div class="card card-gold"><div class="status"><span class="dot"></span>الحساب قيد المراجعة</div><div class="empty">لا يمكنك بدء العمل أو استقبال المشاوير قبل اعتماد الحساب. يمكنك إغلاق التطبيق والعودة لاحقًا.</div></div>'}
-async function registerDriver(){toast('📱 سيتم إكمال التسجيل وتوثيق الرقم من بوت السائق');window.open('https://t.me/Fast_driverbot?start=register','_blank')}
+async function registerDriver() {
+    toast('⏳ جاري الإرسال...');
+    const payload = {
+        name: document.getElementById('reg-name').value,
+        gender: document.getElementById('reg-gender').value,
+        is_saudi: document.getElementById('reg-saudi').value === 'سعودي',
+        city: document.getElementById('reg-city').value,
+        vehicle_type: document.getElementById('reg-vehicle').value,
+        car_model: document.getElementById('reg-car').value,
+        car_color: document.getElementById('reg-color').value,
+        plate_number: document.getElementById('reg-plate').value,
+        phone: 'بانتظار التوثيق'
+    };
+    try {
+        const r = await fetch(API + '/driver_register', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Telegram-Init-Data': TG ? TG.initData : ''
+            },
+            body: JSON.stringify(payload)
+        });
+        if (!r.ok) { toast('⚠️ فشل التسجيل'); return; }
+        toast('✅ جاري نقلك للبوت لتوثيق الرقم...');
+        setTimeout(() => window.open('https://t.me/Fast_driverbot?start=register', '_blank' ), 1500);
+    } catch (e) {
+        toast('⚠️ حدث خطأ في الاتصال');
+    }
+}
+
 function openProfileEditFromAccount(){openProfileEdit(window.currentProfile||{});}
 function openProfileEdit(p){document.getElementById('profile-edit').style.display='block';[['name',p.name],['phone',p.phone],['city',p.city],['vehicle',p.vehicle_type],['car',p.car_model]].forEach(([k,v])=>{const e=document.getElementById('edit-'+k);if(e)e.value=v||''});document.getElementById('edit-plate').value=p.plate_number||'';document.getElementById('profile-edit').scrollIntoView({behavior:'smooth',block:'nearest'})}
 async function saveProfile(){const photo=document.getElementById('edit-photo').files?.[0];let profile_photo='';if(photo)profile_photo=await new Promise((ok,bad)=>{const r=new FileReader();r.onload=()=>ok(r.result);r.onerror=bad;r.readAsDataURL(photo)});const payload={user_id:driverId,name:document.getElementById('edit-name').value.trim(),phone:document.getElementById('edit-phone').value.trim(),city:document.getElementById('edit-city').value.trim(),vehicle_type:document.getElementById('edit-vehicle').value.trim(),car_model:document.getElementById('edit-car').value.trim(),plate_number:document.getElementById('edit-plate').value.trim(),profile_photo};if(!payload.name||!payload.phone)return toast('⚠️ الاسم والجوال مطلوبان');try{const r=await fetch(API+'/driver_profile',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});const d=await r.json().catch(()=>({}));if(!r.ok)throw Error(d.message||'تعذر حفظ البيانات');toast(d.message||'✅ تم إرسال طلب التعديل للإدارة');document.getElementById('profile-edit').style.display='none';loadDriver()}catch(e){toast('⚠️ '+(e.message||'تعذر حفظ بيانات الحساب'))}}
